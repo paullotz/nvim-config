@@ -4,9 +4,9 @@ local t = ls.text_node
 local i = ls.insert_node
 
 return {
-  s('test', {
-    t 'This is a test snippet for ',
-    i(1, 'LaTeX'),
-    t '!',
+  s('efi', {
+    t 'if err != nil {',
+    i(1),
+    t '}',
   }),
 }

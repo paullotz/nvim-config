@@ -119,9 +119,7 @@ require('lazy').setup({
     lazy = false, -- we don't want to lazy load VimTeX
     -- tag = "v2.15", -- uncomment to pin to a specific release
     init = function()
-      -- Use Evince as PDF viewer
       vim.g.vimtex_view_method = 'zathura_simple'
-      -- Compiler settings to ensure SyncTeX support
       vim.g.vimtex_compiler_method = 'latexmk'
       vim.g.vimtex_compiler_latexmk = {
         aux_dir = '',
@@ -137,8 +135,6 @@ require('lazy').setup({
           '-interaction=nonstopmode',
         },
       }
-
-      -- Quickfix settings
       vim.g.vimtex_quickfix_mode = 0 -- Don't auto-open quickfix on warnings
     end,
   },
@@ -358,13 +354,17 @@ require('lazy').setup({
         }
       end, { desc = '[S]earch [/] in Open Files' })
 
-      vim.keymap.set('n', '<leader>sn', function()
-        builtin.find_files { cwd = NEOVIM_DIR }
-      end, { desc = '[S]earch [N]eovim files' })
+      vim.keymap.set('n', '<leader>sc', function()
+        local xdg_config = os.getenv 'XDG_CONFIG_HOME' or (os.getenv 'HOME' .. '/.config')
+        builtin.find_files { cwd = xdg_config }
+      end, { desc = '[S]earch [C]onfig directory' })
 
-      vim.keymap.set('n', '<leader>sx', function()
-        builtin.find_files { cwd = NIX_DIR }
-      end, { desc = '[S]earch Ni[x] files' })
+      vim.keymap.set('n', '<leader>sn', function()
+        builtin.find_files {
+          cwd = vim.fn.stdpath 'config',
+          follow = true,
+        }
+      end, { desc = '[S]earch [N]eovim files' })
     end,
   },
 
@@ -551,29 +551,59 @@ require('lazy').setup({
         javascript = { 'prettier' },
         typescript = { 'prettier' },
         typescriptreact = { 'prettier' },
-        nix = { 'nixfmt' },
       },
     },
   },
-  {
+  { -- Autocompletion
     'saghen/blink.cmp',
+    event = 'VimEnter',
     version = '1.*',
-    ---@module 'blink.cmp'
-    ---@type blink.cmp.Config
-    dependencies = { 'L3MON4D3/LuaSnip', version = 'v2.*' },
+    dependencies = {
+      {
+        'L3MON4D3/LuaSnip',
+        version = '2.*',
+        build = (function()
+          if vim.fn.has 'win32' == 1 or vim.fn.executable 'make' == 0 then
+            return
+          end
+          return 'make install_jsregexp'
+        end)(),
+        opts = {},
+      },
+      'folke/lazydev.nvim',
+    },
+    --- @module 'blink.cmp'
+    --- @type blink.cmp.Config
     opts = {
-      keymap = { preset = 'default' },
+      keymap = {
+        preset = 'default',
+      },
 
       appearance = {
         nerd_font_variant = 'mono',
       },
-      completion = { documentation = { auto_show = false } },
-      snippets = { preset = 'luasnip' },
-      sources = {
-        default = { 'lsp', 'path', 'snippets', 'buffer' },
+
+      completion = {
+        documentation = { auto_show = true, auto_show_delay_ms = 500 },
       },
+
+      sources = {
+        default = { 'lsp', 'path', 'snippets', 'lazydev' },
+        providers = {
+          lazydev = { module = 'lazydev.integrations.blink', score_offset = 100 },
+        },
+      },
+
+      snippets = { preset = 'luasnip' },
+
+      fuzzy = { implementation = 'lua' },
     },
-    opts_extend = { 'sources.default' },
+    config = function(_, opts)
+      local ls = require 'luasnip'
+      ls.setup { enable_autosnippets = true }
+      require('luasnip.loaders.from_lua').load { paths = vim.fn.stdpath 'config' .. '/snippets' }
+      require('blink.cmp').setup(opts)
+    end,
   },
   {
     'vague2k/vague.nvim',
@@ -627,23 +657,7 @@ require('lazy').setup({
   },
 }, {
   ui = {
-    -- If you are using a Nerd Font: set icons to an empty table which will use the
-    -- default lazy.nvim defined Nerd Font icons, otherwise define a unicode icons table
-    icons = vim.g.have_nerd_font and {} or {
-      cmd = '⌘',
-      config = '🛠',
-      event = '📅',
-      ft = '📂',
-      init = '⚙',
-      keys = '🗝',
-      plugin = '🔌',
-      runtime = '💻',
-      require = '🌙',
-      source = '📄',
-      start = '🚀',
-      task = '📌',
-      lazy = '💤 ',
-    },
+    icons = {},
   },
 })
 
