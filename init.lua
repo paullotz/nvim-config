@@ -119,10 +119,27 @@ require('lazy').setup({
     lazy = false, -- we don't want to lazy load VimTeX
     -- tag = "v2.15", -- uncomment to pin to a specific release
     init = function()
-      -- VimTeX configuration goes here, e.g.
-      vim.g.vimtex_view_method = 'zathura'
+      -- Use Evince as PDF viewer
+      vim.g.vimtex_view_method = 'zathura_simple'
+      -- Compiler settings to ensure SyncTeX support
       vim.g.vimtex_compiler_method = 'latexmk'
-      vim.g.vimtex_indent_lists = {}
+      vim.g.vimtex_compiler_latexmk = {
+        aux_dir = '',
+        out_dir = '',
+        callback = 1,
+        continuous = 1,
+        executable = 'latexmk',
+        hooks = {},
+        options = {
+          '-verbose',
+          '-file-line-error',
+          '-synctex=1',
+          '-interaction=nonstopmode',
+        },
+      }
+
+      -- Quickfix settings
+      vim.g.vimtex_quickfix_mode = 0 -- Don't auto-open quickfix on warnings
     end,
   },
   {
