@@ -5,8 +5,9 @@ local i = ls.insert_node
 
 return {
   s('efi', {
-    t 'if err != nil {',
-    i(1),
-    t '}',
+    t { 'if err != nil {' },
+    t { '', '\t' },
+    i(0),
+    t { '', '}' },
   }),
 }

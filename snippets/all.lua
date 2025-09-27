@@ -1,12 +1,12 @@
 local ls = require 'luasnip'
 local s = ls.snippet
 local t = ls.text_node
-local i = ls.insert_node
 
 return {
-  s('test', {
-    t 'This is a test snippet for ',
-    i(1, 'LaTeX'),
-    t '!',
+  s('mail', {
+    t 'paul.lotz@gmx.at',
+  }),
+  s('gh', {
+    t 'https://github.com/paullotz',
   }),
 }
