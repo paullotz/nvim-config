@@ -73,7 +73,7 @@ local map = vim.keymap.set
 map('n', '<Esc>', '<cmd>nohlsearch<CR>')
 
 -- Diagnostic keymaps
-map('n', '<leader>qf', vim.diagnostic.setloclist, { desc = 'Open diagnostic [Q]uickfix list' })
+map('n', '<C-q>', ":copen<CR>", { desc = 'Open diagnostic [Q]uickfix list' })
 
 -- Disable arrow keys in normal mode
 map('n', '<left>', '<cmd>echo "Use h to move!!"<CR>')
@@ -308,7 +308,7 @@ require('lazy').setup({
 
       vim.keymap.set('n', '<leader>sc', function()
         local xdg_config = os.getenv 'XDG_CONFIG_HOME' or (os.getenv 'HOME' .. '/.config')
-        builtin.find_files { cwd = xdg_config }
+        builtin.find_files { cwd = xdg_config, follow = true, }
       end, { desc = '[S]earch [C]onfig directory' })
 
       vim.keymap.set('n', '<leader>sn', function()
