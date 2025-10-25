@@ -71,27 +71,22 @@ vim.opt.shiftwidth = 4
 local map = vim.keymap.set
 
 map('n', '<Esc>', '<cmd>nohlsearch<CR>')
-
--- Diagnostic keymaps
 map('n', '<C-q>', ":copen<CR>", { desc = 'Open diagnostic [Q]uickfix list' })
-
--- Disable arrow keys in normal mode
-map('n', '<left>', '<cmd>echo "Use h to move!!"<CR>')
-map('n', '<right>', '<cmd>echo "Use l to move!!"<CR>')
-map('n', '<up>', '<cmd>echo "Use k to move!!"<CR>')
-map('n', '<down>', '<cmd>echo "Use j to move!!"<CR>')
-
--- Going back a file
 map('n', '<C-p>', ':e#<CR>', { desc = 'Go back to [p]revious file' })
-
--- Write & quit
 map('n', '<leader>w', ':write<CR>', { desc = '[W]rite changes to current file' })
-map('n', '<leader>Q', '<Cmd>:wqa<CR>')
-
--- File keymaps
-local zshrc_config = (os.getenv 'HOME' .. '/.config/zsh/.zshrc')
-map('n', '<leader>Z', '<cmd>e' .. zshrc_config .. '<CR>')
 map('n', '<leader>f', vim.lsp.buf.format)
+
+-- Keymaps for Tabs (testing)
+map({ "n", "t" }, "<Leader>t", "<Cmd>tabnew<CR>")
+map({ "n", "t" }, "<Leader>x", "<Cmd>tabclose<CR>")
+for i = 1, 8 do
+  map({ "n", "t" }, "<Leader>" .. i, "<Cmd>tabnext " .. i .. "<CR>")
+end
+
+map({ "n" }, "<M-n>", "<cmd>resize +2<CR>")
+map({ "n" }, "<M-e>", "<cmd>resize -2<CR>")
+map({ "n" }, "<M-i>", "<cmd>vertical resize +5<CR>")
+map({ "n" }, "<M-m>", "<cmd>vertical resize -5<CR>")
 
 vim.api.nvim_create_autocmd('TextYankPost', {
   desc = 'Highlight when yanking (copying) text',
@@ -101,8 +96,14 @@ vim.api.nvim_create_autocmd('TextYankPost', {
   end,
 })
 
--- [[ Install `lazy.nvim` plugin manager ]]
---    See `:help lazy.nvim.txt` or https://github.com/folke/lazy.nvim for more info
+vim.api.nvim_create_autocmd("BufWinEnter", {
+  pattern = "*.jsx,*.tsx",
+  group = vim.api.nvim_create_augroup("TS", { clear = true }),
+  callback = function()
+    vim.cmd([[set filetype=typescriptreact]])
+  end
+})
+
 local lazypath = vim.fn.stdpath 'data' .. '/lazy/lazy.nvim'
 if not vim.loop.fs_stat(lazypath) then
   local lazyrepo = 'https://github.com/folke/lazy.nvim.git'
@@ -110,12 +111,10 @@ if not vim.loop.fs_stat(lazypath) then
 end ---@diagnostic disable-next-line: undefined-field
 vim.opt.rtp:prepend(lazypath)
 
--- Plugins
 require('lazy').setup({
   {
     'lervag/vimtex',
-    lazy = false, -- we don't want to lazy load VimTeX
-    -- tag = "v2.15", -- uncomment to pin to a specific release
+    lazy = false,
     init = function()
       vim.g.vimtex_view_method = 'zathura_simple'
       vim.g.vimtex_compiler_method = 'latexmk'
@@ -147,12 +146,19 @@ require('lazy').setup({
       end
 
       require('oil').setup {
-        columns = { 'icon' },
-        win_options = {
-          winbar = '%{v:lua.CustomOilBar()}',
+        lsp_file_methods = {
+          enabled = true,
+          timeout_ms = 1000,
+          autosave_changes = true,
         },
-        view_options = {
-          show_hidden = true,
+        columns = {
+          "permissions",
+          "icon",
+        },
+        float = {
+          max_width = 0.7,
+          max_height = 0.6,
+          border = "rounded",
         },
       }
 
@@ -233,37 +239,7 @@ require('lazy').setup({
       { 'nvim-tree/nvim-web-devicons',            enabled = vim.g.have_nerd_font },
     },
     config = function()
-      -- Telescope is a fuzzy finder that comes with a lot of different things that
-      -- it can fuzzy find! It's more than just a "file finder", it can search
-      -- many different aspects of Neovim, your workspace, LSP, and more!
-      --
-      -- The easiest way to use Telescope, is to start by doing something like:
-      --  :Telescope help_tags
-      --
-      -- After running this command, a window will open up and you're able to
-      -- type in the prompt window. You'll see a list of `help_tags` options and
-      -- a corresponding preview of the help.
-      --
-      -- Two important keymaps to use while in Telescope are:
-      --  - Insert mode: <c-/>
-      --  - Normal mode: ?
-      --
-      -- This opens a window that shows you all of the keymaps for the current
-      -- Telescope picker. This is really useful to discover what Telescope can
-      -- do as well as how to actually do it!
-
-      -- [[ Configure Telescope ]]
-      -- See `:help telescope` and `:help telescope.setup()`
       require('telescope').setup {
-        -- You can put your default mappings / updates / etc. in here
-        --  All the info you're looking for is in `:help telescope.setup()`
-        --
-        -- defaults = {
-        --   mappings = {
-        --     i = { ['<c-enter>'] = 'to_fuzzy_refine' },
-        --   },
-        -- },
-        -- pickers = {}
         extensions = {
           ['ui-select'] = {
             require('telescope.themes').get_dropdown(),
@@ -285,20 +261,10 @@ require('lazy').setup({
       vim.keymap.set('n', '<leader>sg', builtin.live_grep, { desc = '[S]earch by [G]rep' })
       vim.keymap.set('n', '<leader>sd', builtin.diagnostics, { desc = '[S]earch [D]iagnostics' })
       vim.keymap.set('n', '<leader>sr', builtin.resume, { desc = '[S]earch [R]esume' })
+      vim.keymap.set('n', '<leader>sb', builtin.git_bcommits, { desc = '[S]earch [B]commits' })
       vim.keymap.set('n', '<leader>s.', builtin.oldfiles, { desc = '[S]earch Recent Files ("." for repeat)' })
       vim.keymap.set('n', '<leader><leader>', builtin.buffers, { desc = '[ ] Find existing buffers' })
 
-      -- Slightly advanced example of overriding default behavior and theme
-      vim.keymap.set('n', '<leader>/', function()
-        -- You can pass additional configuration to Telescope to change the theme, layout, etc.
-        builtin.current_buffer_fuzzy_find(require('telescope.themes').get_dropdown {
-          winblend = 10,
-          previewer = false,
-        })
-      end, { desc = '[/] Fuzzily search in current buffer' })
-
-      -- It's also possible to pass additional configuration options
-      --  See `:help telescope.builtin.live_grep()` for information about particular keys
       vim.keymap.set('n', '<leader>s/', function()
         builtin.live_grep {
           grep_open_files = true,
@@ -436,6 +402,11 @@ require('lazy').setup({
       local servers = {
         clangd = {},
         gopls = {},
+        cssls = {},
+        sqls = {},
+        tailwindcss = {},
+        vtsls = {},
+        jsonls = {},
         lua_ls = {
           settings = {
             Lua = {
@@ -514,6 +485,10 @@ require('lazy').setup({
       ls.setup { enable_autosnippets = true }
       require('luasnip.loaders.from_lua').load { paths = vim.fn.stdpath 'config' .. '/snippets' }
       require('blink.cmp').setup(opts)
+
+      map({ "i", "s" }, "<C-e>", function() ls.expand_or_jump(1) end, { silent = true })
+      map({ "i", "s" }, "<C-J>", function() ls.jump(1) end, { silent = true })
+      map({ "i", "s" }, "<C-K>", function() ls.jump(-1) end, { silent = true })
     end,
   },
   {
