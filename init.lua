@@ -56,7 +56,6 @@ vim.opt.listchars = { tab = '» ', trail = '·', nbsp = '␣' }
 
 -- Preview substitutions live, as you type!
 vim.opt.inccommand = 'split'
-
 -- Show which line your cursor is on
 vim.opt.cursorline = true
 
@@ -112,6 +111,73 @@ end ---@diagnostic disable-next-line: undefined-field
 vim.opt.rtp:prepend(lazypath)
 
 require('lazy').setup({
+  {
+    'alexghergh/nvim-tmux-navigation',
+    config = function()
+      require 'nvim-tmux-navigation'.setup {
+        disable_when_zoomed = true, -- defaults to false
+        keybindings = {
+          left = "<C-h>",
+          down = "<C-j>",
+          up = "<C-k>",
+          right = "<C-l>",
+          last_active = "<C-\\>",
+          next = "<C-Space>",
+        }
+      }
+    end
+  },
+  {
+    "folke/flash.nvim",
+    event = "VeryLazy",
+    ---@type Flash.Config
+    opts = {},
+    keys = {
+      { ".",     mode = { "n", "x", "o" }, function() require("flash").jump() end,              desc = "Flash" },
+      { "Zk",    mode = { "n", "x", "o" }, function() require("flash").treesitter() end,        desc = "Flash Treesitter" },
+      { "r",     mode = "o",               function() require("flash").remote() end,            desc = "Remote Flash" },
+      { "R",     mode = { "o", "x" },      function() require("flash").treesitter_search() end, desc = "Treesitter Search" },
+      { "<c-s>", mode = { "c" },           function() require("flash").toggle() end,            desc = "Toggle Flash Search" },
+    },
+  },
+  {
+    'vimpostor/vim-tpipeline',
+  },
+  {
+    "nvim-lualine/lualine.nvim",
+    dependencies = { "echasnovski/mini.icons" },
+    config = function()
+      require("lualine").setup({
+        options = {
+          icons_enabled = false,
+          theme = "auto",
+          component_separators = "",
+          section_separators = "",
+        },
+
+        sections = {
+          lualine_a = { "mode" },
+          lualine_b = { "branch" },
+          lualine_c = { "filename" },
+          lualine_x = {
+            function()
+              local encoding = vim.o.fileencoding
+              if encoding == "" then
+                return vim.bo.fileformat .. " :: " .. vim.bo.filetype
+              else
+                return encoding .. " :: " .. vim.bo.fileformat .. " :: " .. vim.bo.filetype
+              end
+            end,
+          },
+          lualine_y = { "progress" },
+          lualine_z = { "location" },
+        },
+      })
+      if os.getenv('TMUX') then
+        vim.defer_fn(function() vim.o.laststatus = 0 end, 0)
+      end
+    end,
+  },
   {
     'lervag/vimtex',
     lazy = false,
