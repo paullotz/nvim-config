@@ -184,6 +184,26 @@ require('lazy').setup({
     init = function()
       vim.g.vimtex_view_method = 'zathura_simple'
       vim.g.vimtex_compiler_method = 'latexmk'
+      vim.g.vimtex_complete_bibtex_commands = {
+        'cite',
+        'parencite',
+        'textcite',
+        'footcite',
+        'autocite',
+        'smartcite',
+        'supercite',
+        'fullcite',
+        'notecite',
+        'parencites',
+        'textcites',
+        'autocites',
+        'smartcites',
+        'notecites',
+        'citeyear',
+        'citeauthor',
+        'citetitle',
+        'citeurl',
+      }
       vim.g.vimtex_compiler_latexmk = {
         aux_dir = '',
         out_dir = '',
