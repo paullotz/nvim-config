@@ -69,6 +69,20 @@ vim.opt.shiftwidth = 4
 
 local map = vim.keymap.set
 
+-- Run Biome check on entire project and populate quickfix
+function BiomeCheckProject()
+  -- Run biome check on current directory (.)
+  vim.fn.setqflist({}, 'r') -- Clear quickfix list
+  vim.cmd('cexpr system("npx biome check --log-kind=compact")')
+  vim.cmd('copen')
+end
+
+-- Create a command
+vim.api.nvim_create_user_command('BiomeCheck', BiomeCheckProject, {})
+
+-- Optional: create a keybinding
+vim.keymap.set('n', '<leader>bc', BiomeCheckProject, { desc = "Biome check project" })
+
 map('n', '<Esc>', '<cmd>nohlsearch<CR>')
 map('n', '<C-q>', ":copen<CR>", { desc = 'Open diagnostic [Q]uickfix list' })
 map('n', '<C-p>', ':e#<CR>', { desc = 'Go back to [p]revious file' })
@@ -128,55 +142,7 @@ require('lazy').setup({
     end
   },
   {
-    "folke/flash.nvim",
-    event = "VeryLazy",
-    ---@type Flash.Config
-    opts = {},
-    keys = {
-      { ".",     mode = { "n", "x", "o" }, function() require("flash").jump() end,              desc = "Flash" },
-      { "Zk",    mode = { "n", "x", "o" }, function() require("flash").treesitter() end,        desc = "Flash Treesitter" },
-      { "r",     mode = "o",               function() require("flash").remote() end,            desc = "Remote Flash" },
-      { "R",     mode = { "o", "x" },      function() require("flash").treesitter_search() end, desc = "Treesitter Search" },
-      { "<c-s>", mode = { "c" },           function() require("flash").toggle() end,            desc = "Toggle Flash Search" },
-    },
-  },
-  {
     'vimpostor/vim-tpipeline',
-  },
-  {
-    "nvim-lualine/lualine.nvim",
-    dependencies = { "echasnovski/mini.icons" },
-    config = function()
-      require("lualine").setup({
-        options = {
-          icons_enabled = false,
-          theme = "auto",
-          component_separators = "",
-          section_separators = "",
-        },
-
-        sections = {
-          lualine_a = { "mode" },
-          lualine_b = { "branch" },
-          lualine_c = { "filename" },
-          lualine_x = {
-            function()
-              local encoding = vim.o.fileencoding
-              if encoding == "" then
-                return vim.bo.fileformat .. " :: " .. vim.bo.filetype
-              else
-                return encoding .. " :: " .. vim.bo.fileformat .. " :: " .. vim.bo.filetype
-              end
-            end,
-          },
-          lualine_y = { "progress" },
-          lualine_z = { "location" },
-        },
-      })
-      if os.getenv('TMUX') then
-        vim.defer_fn(function() vim.o.laststatus = 0 end, 0)
-      end
-    end,
   },
   {
     'lervag/vimtex',
@@ -184,41 +150,20 @@ require('lazy').setup({
     init = function()
       vim.g.vimtex_view_method = 'zathura_simple'
       vim.g.vimtex_compiler_method = 'latexmk'
-      vim.g.vimtex_complete_bibtex_commands = {
-        'cite',
-        'parencite',
-        'textcite',
-        'footcite',
-        'autocite',
-        'smartcite',
-        'supercite',
-        'fullcite',
-        'notecite',
-        'parencites',
-        'textcites',
-        'autocites',
-        'smartcites',
-        'notecites',
-        'citeyear',
-        'citeauthor',
-        'citetitle',
-        'citeurl',
-      }
       vim.g.vimtex_compiler_latexmk = {
-        aux_dir = '',
+        aux_dir = 'build',
         out_dir = '',
         callback = 1,
         continuous = 1,
         executable = 'latexmk',
         hooks = {},
         options = {
-          '-verbose',
           '-file-line-error',
           '-synctex=1',
           '-interaction=nonstopmode',
         },
       }
-      vim.g.vimtex_quickfix_mode = 0 -- Don't auto-open quickfix on warnings
+      vim.g.vimtex_quickfix_mode = 0
     end,
   },
   {
@@ -232,6 +177,9 @@ require('lazy').setup({
       end
 
       require('oil').setup {
+        view_options = {
+          show_hidden = true,
+        },
         lsp_file_methods = {
           enabled = true,
           timeout_ms = 1000,
@@ -255,6 +203,7 @@ require('lazy').setup({
     'echasnovski/mini.nvim',
     config = function()
       require('mini.pairs').setup()
+      require('mini.statusline').setup()
       require('mini.bufremove').setup {
         map('n', '<leader>q', require('mini.bufremove').delete),
       }
@@ -487,6 +436,7 @@ require('lazy').setup({
       local capabilities = require('blink.cmp').get_lsp_capabilities()
       local servers = {
         clangd = {},
+        biome = {},
         gopls = {},
         cssls = {},
         sqls = {},
@@ -507,15 +457,39 @@ require('lazy').setup({
       require('mason-tool-installer').setup { ensure_installed = ensure_installed }
 
       require('mason-lspconfig').setup {
-        ensure_installed = {}, -- explicitly set to an empty table (Kickstart populates installs via mason-tool-installer)
+        ensure_installed = {},
         automatic_installation = false,
         handlers = {
           function(server_name)
             local server = servers[server_name] or {}
-            -- This handles overriding only values explicitly passed
-            -- by the server configuration above. Useful when disabling
-            -- certain features of an LSP (for example, turning off formatting for ts_ls)
             server.capabilities = vim.tbl_deep_extend('force', {}, capabilities, server.capabilities or {})
+
+            -- disable formatting for vtsls
+            if server_name == 'vtsls' then
+              server.on_attach = function(client, bufnr)
+                client.server_capabilities.documentFormattingProvider = false
+              end
+            end
+
+            if server_name == 'biome' then
+              server.on_attach = function(client, bufnr)
+                vim.api.nvim_create_autocmd("BufWritePre", {
+                  group = vim.api.nvim_create_augroup("BiomeFixAll", { clear = true }),
+                  buffer = bufnr,
+                  callback = function()
+                    vim.lsp.buf.code_action({
+                      context = {
+                        only = { "source.fixAll" },
+                        diagnostics = {},
+                      },
+                      apply = true,
+                      timeout = 100,
+                    })
+                  end,
+                })
+              end
+            end
+
             require('lspconfig')[server_name].setup(server)
           end,
         },
