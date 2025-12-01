@@ -203,7 +203,11 @@ require('lazy').setup({
     'echasnovski/mini.nvim',
     config = function()
       require('mini.pairs').setup()
-      require('mini.statusline').setup()
+      require('mini.git').setup()
+      require('mini.diff').setup()
+      require('mini.statusline').setup({
+        use_icons = false,
+      })
       require('mini.bufremove').setup {
         map('n', '<leader>q', require('mini.bufremove').delete),
       }
@@ -294,11 +298,34 @@ require('lazy').setup({
       vim.keymap.set('n', '<leader>ss', builtin.builtin, { desc = '[S]earch [S]elect Telescope' })
       vim.keymap.set('n', '<leader>sw', builtin.grep_string, { desc = '[S]earch current [W]ord' })
       vim.keymap.set('n', '<leader>sg', builtin.live_grep, { desc = '[S]earch by [G]rep' })
-      vim.keymap.set('n', '<leader>sd', builtin.diagnostics, { desc = '[S]earch [D]iagnostics' })
+      vim.keymap.set('n', '<leader>sx', builtin.diagnostics, { desc = '[S]earch [D]iagnostics' })
       vim.keymap.set('n', '<leader>sr', builtin.lsp_references, { desc = '[S]earch [R]eferences' })
       vim.keymap.set('n', '<leader>sb', builtin.git_bcommits, { desc = '[S]earch [B]commits' })
       vim.keymap.set('n', '<leader>s.', builtin.oldfiles, { desc = '[S]earch Recent Files ("." for repeat)' })
       vim.keymap.set('n', '<leader><leader>', builtin.buffers, { desc = '[ ] Find existing buffers' })
+
+      vim.keymap.set('n', '<leader>sd', function()
+        require('telescope.builtin').find_files {
+          find_command = { 'fd', '--type', 'd', '--max-depth', '3', '--exclude', '.git', '--exclude', 'node_modules' },
+          prompt_title = 'Select Directory to Search',
+          attach_mappings = function(prompt_bufnr)
+            local actions = require 'telescope.actions'
+            local action_state = require 'telescope.actions.state'
+
+            actions.select_default:replace(function()
+              actions.close(prompt_bufnr)
+              local selection = action_state.get_selected_entry()
+              local dir = selection[1]
+
+              require('telescope.builtin').live_grep {
+                cwd = dir,
+                prompt_title = 'Grep in ' .. dir,
+              }
+            end)
+            return true
+          end,
+        }
+      end, { desc = '[S]earch inside a [D]irectory' })
 
       vim.keymap.set('n', '<leader>s/', function()
         builtin.live_grep {
