@@ -317,6 +317,7 @@ require('lazy').setup({
               local selection = action_state.get_selected_entry()
               local dir = selection[1]
 
+              -- After selecting dir, launch live_grep in that dir
               require('telescope.builtin').live_grep {
                 cwd = dir,
                 prompt_title = 'Grep in ' .. dir,
