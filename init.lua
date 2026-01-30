@@ -67,21 +67,16 @@ vim.opt.hlsearch = true
 vim.opt.tabstop = 4
 vim.opt.shiftwidth = 4
 
+-- Spellchecking
+vim.api.nvim_create_autocmd("FileType", {
+  pattern = "tex",
+  callback = function()
+    vim.opt_local.spell = true
+    vim.opt_local.spelllang = "en_us"
+  end,
+})
+
 local map = vim.keymap.set
-
--- Run Biome check on entire project and populate quickfix
-function BiomeCheckProject()
-  -- Run biome check on current directory (.)
-  vim.fn.setqflist({}, 'r') -- Clear quickfix list
-  vim.cmd('cexpr system("npx biome check --log-kind=compact")')
-  vim.cmd('copen')
-end
-
--- Create a command
-vim.api.nvim_create_user_command('BiomeCheck', BiomeCheckProject, {})
-
--- Optional: create a keybinding
-vim.keymap.set('n', '<leader>bc', BiomeCheckProject, { desc = "Biome check project" })
 
 map('n', '<Esc>', '<cmd>nohlsearch<CR>')
 map('n', '<C-q>', ":copen<CR>", { desc = 'Open diagnostic [Q]uickfix list' })
@@ -89,7 +84,6 @@ map('n', '<C-p>', ':e#<CR>', { desc = 'Go back to [p]revious file' })
 map('n', '<leader>w', ':write<CR>', { desc = '[W]rite changes to current file' })
 map('n', '<leader>f', vim.lsp.buf.format)
 
--- Keymaps for Tabs (testing)
 map({ "n", "t" }, "<Leader>t", "<Cmd>tabnew<CR>")
 map({ "n", "t" }, "<Leader>x", "<Cmd>tabclose<CR>")
 for i = 1, 8 do
@@ -129,7 +123,7 @@ require('lazy').setup({
     'alexghergh/nvim-tmux-navigation',
     config = function()
       require 'nvim-tmux-navigation'.setup {
-        disable_when_zoomed = true, -- defaults to false
+        disable_when_zoomed = true,
         keybindings = {
           left = "<C-h>",
           down = "<C-j>",
@@ -471,6 +465,7 @@ require('lazy').setup({
         tailwindcss = {},
         vtsls = {},
         jsonls = {},
+        harper_ls = {},
         lua_ls = {
           settings = {
             Lua = {
@@ -590,6 +585,12 @@ require('lazy').setup({
     end,
   },
   {
+    "windwp/nvim-ts-autotag",
+    config = function()
+      require('nvim-ts-autotag').setup()
+    end
+  },
+  {
     'nvim-treesitter/nvim-treesitter',
     build = ':TSUpdate',
     opts = {
@@ -611,5 +612,4 @@ require('lazy').setup({
   },
 })
 
--- The line beneath this is called `modeline`. See `:help modeline`
 -- vim: ts=2 sts=2 sw=2 et
