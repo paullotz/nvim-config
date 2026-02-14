@@ -120,6 +120,12 @@ vim.opt.rtp:prepend(lazypath)
 
 require('lazy').setup({
   {
+    "paullotz/highlighter",
+    config = function()
+      require("highlighter").setup()
+    end,
+  },
+  {
     "zbirenbaum/copilot.lua",
     cmd = "Copilot",
     event = "InsertEnter",
@@ -629,9 +635,6 @@ require('lazy').setup({
     end,
   },
 }, {
-  spec = {
-    { import = 'plugins' },
-  },
   ui = {
     icons = {},
   },
