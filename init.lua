@@ -64,8 +64,8 @@ vim.opt.scrolloff = 10
 
 -- Set highlight on search, but clear on pressing <Esc> in normal mode
 vim.opt.hlsearch = true
-vim.opt.tabstop = 4
-vim.opt.shiftwidth = 4
+vim.opt.tabstop = 2
+vim.opt.shiftwidth = 2
 
 -- Spellchecking
 vim.api.nvim_create_autocmd("FileType", {
@@ -108,6 +108,8 @@ vim.api.nvim_create_autocmd("BufWinEnter", {
   group = vim.api.nvim_create_augroup("TS", { clear = true }),
   callback = function()
     vim.cmd([[set filetype=typescriptreact]])
+    vim.opt_local.tabstop = 2
+    vim.opt_local.shiftwidth = 2
   end
 })
 
@@ -120,11 +122,18 @@ vim.opt.rtp:prepend(lazypath)
 
 require('lazy').setup({
   {
-    "paullotz/highlighter",
+    dir = "~/Code/highlighter",
+    name = "highlighter",
     config = function()
       require("highlighter").setup()
-    end,
+    end
   },
+  -- {
+  --     "paullotz/highlighter",
+  --     config = function()
+  --       require("highlighter").setup()
+  --     end,
+  --   },
   {
     "zbirenbaum/copilot.lua",
     cmd = "Copilot",
@@ -407,7 +416,7 @@ require('lazy').setup({
           map('gd', require('telescope.builtin').lsp_definitions, '[G]oto [D]efinition')
 
           -- Find references for the word under your cursor.
-          -- map('gr', require('telescope.builtin').lsp_references, '[G]oto [R]eferences')
+          map('gr', require('telescope.builtin').lsp_references, '[G]oto [R]eferences')
 
           -- Jump to the implementation of the word under your cursor.
           --  Useful when your language has ways of declaring types without an actual implementation.
@@ -422,6 +431,9 @@ require('lazy').setup({
           --  Symbols are things like variables, functions, types, etc.
           map('<leader>ds', require('telescope.builtin').lsp_document_symbols, '[D]ocument [S]ymbols')
 
+          -- Show diagnostics in Telescope
+          map('<leader>cd', require('telescope.builtin').diagnostics, '[C]ode [D]iagnostics')
+
           -- Fuzzy find all the symbols in your current workspace.
           --  Similar to document symbols, except searches over your entire project.
           map('<leader>ws', require('telescope.builtin').lsp_dynamic_workspace_symbols, '[W]orkspace [S]ymbols')
@@ -429,6 +441,13 @@ require('lazy').setup({
           -- Rename the variable under your cursor.
           --  Most Language Servers support renaming across files, etc.
           map('<leader>rn', vim.lsp.buf.rename, '[R]e[n]ame')
+
+          -- Jump to the type of the word under cursor
+          map('gy', require('telescope.builtin').lsp_type_definitions, '[G]oto T[y]pe')
+
+          -- Navigate diagnostics
+          map(']d', function() vim.diagnostic.goto_next() end, 'Next diagnostic')
+          map('[d', function() vim.diagnostic.goto_prev() end, 'Previous diagnostic')
 
           -- Execute a code action, usually your cursor needs to be on top of an error
           -- or a suggestion from your LSP for this to activate.
