@@ -120,6 +120,28 @@ vim.opt.rtp:prepend(lazypath)
 
 require('lazy').setup({
   {
+    "zbirenbaum/copilot.lua",
+    cmd = "Copilot",
+    event = "InsertEnter",
+    config = function()
+      require("copilot").setup({
+        suggestion = {
+          enabled = true,
+          auto_trigger = true,
+          keymap = {
+            accept = "<C-j>",
+            accept_word = false,
+            accept_line = false,
+            next = "<M-]>",
+            prev = "<M-[>",
+            dismiss = "<C-]>",
+          },
+        },
+        panel = { enabled = false },
+      })
+    end,
+  },
+  {
     'alexghergh/nvim-tmux-navigation',
     config = function()
       require 'nvim-tmux-navigation'.setup {
@@ -607,6 +629,9 @@ require('lazy').setup({
     end,
   },
 }, {
+  spec = {
+    { import = 'plugins' },
+  },
   ui = {
     icons = {},
   },
