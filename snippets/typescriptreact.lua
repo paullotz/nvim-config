@@ -7,23 +7,23 @@ require("luasnip").filetype_extend("javascript", {"typescriptreact"})
 local s = ls.snippet
 local t = ls.text_node
 local i = ls.insert_node
-local f = ls.function_node  -- <-- ADD THIS
+local f = ls.function_node
 local rep = extras.rep
 
 return {
   s("rafce", {
-    t("import React from 'react';"),
+    t("import { type FC } from 'react';"),
     t({ "", "", "" }),
-    t("interface "),
+    t("type "),
     i(1, "Props"),
-    t(" {"),
+    t(" = {"),
     t({ "", "  " }),
     i(2, "// props"),
     t({ "", "}" }),
     t({ "", "", "" }),
-    t("const "),
+    t("export const "),
     i(3, "ComponentName"),
-    t(": React.FC<"),
+    t(": FC<"),
     rep(1),
     t("> = ({ "),
     i(4),
@@ -36,9 +36,6 @@ return {
     t({ "", "  );" }),
     t({ "", "}" }),
     t({ "", "", "" }),
-    t("export default "),
-    rep(3),
-    t(";"),
   }),
   s("useState", {
     t("const ["),
