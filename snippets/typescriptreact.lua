@@ -1,8 +1,14 @@
 local ls = require("luasnip")
+local extras = require("luasnip.extras")
+
+require("luasnip").filetype_extend("typescript", {"typescriptreact"})
+require("luasnip").filetype_extend("javascript", {"typescriptreact"})
 
 local s = ls.snippet
 local t = ls.text_node
 local i = ls.insert_node
+local f = ls.function_node  -- <-- ADD THIS
+local rep = extras.rep
 
 return {
   s("rafce", {
@@ -38,7 +44,8 @@ return {
     t("const ["),
     i(1, "state"),
     t(", set"),
-    t(function(args) return args[1][1]:gsub("^%l", string.upper) end, 1),
+    -- CHANGED BELOW: t -> f, and 1 -> {1}
+    f(function(args) return args[1][1]:gsub("^%l", string.upper) end, {1}),
     t("] = useState<"),
     i(2, "Type"),
     t(">("),
