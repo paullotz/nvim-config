@@ -662,4 +662,5 @@ q      },
   },
 })
 
+require('nvim-treesitter.install').install(vim.tbl_filter(function(l) return parsers[l] end, wanted))
 -- vim: ts=2 sts=2 sw=2 et
