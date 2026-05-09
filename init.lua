@@ -126,16 +126,13 @@ vim.pack.add({
   'https://github.com/folke/lazydev.nvim',
 })
 
-vim.opt.rtp:prepend(vim.fn.expand "~/Code/highlighter")
-require("highlighter").setup()
-
 require('vague').setup({ transparent = true })
 vim.cmd 'colorscheme vague'
 vim.cmd ':hi statusline guibg=NONE'
 
 require("copilot").setup({
   suggestion = {
-    enabled = true,
+    enabled = false,
     auto_trigger = true,
     keymap = {
       accept_word = false,
