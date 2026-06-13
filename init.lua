@@ -455,7 +455,7 @@ vim.api.nvim_create_autocmd('FileType', {
 })
 
 local parsers = require('nvim-treesitter.parsers')
-local wanted = { 'bash', 'c', 'css', 'diff', 'go', 'html', 'javascript', 'json', 'latex', 'lua', 'luadoc', 'markdown',
+local wanted = { 'bash', 'c', 'cpp', 'css', 'diff', 'go', 'html', 'javascript', 'json', 'latex', 'lua', 'luadoc', 'markdown',
   'tsx', 'typescript', 'vim', 'vimdoc' }
 require('nvim-treesitter.install').install(vim.tbl_filter(function(l) return parsers[l] end, wanted))
 
