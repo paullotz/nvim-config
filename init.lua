@@ -204,7 +204,6 @@ vim.keymap.set('n', '<leader>e', '<CMD>Oil<CR>', { desc = 'Open parent directory
 require('mini.pairs').setup()
 require('mini.git').setup()
 require('mini.surround').setup()
-require('mini.surround').setup()
 require('mini.statusline').setup({
   use_icons = false,
 })
@@ -457,6 +456,10 @@ vim.api.nvim_create_autocmd('FileType', {
 local parsers = require('nvim-treesitter.parsers')
 local wanted = { 'bash', 'c', 'cpp', 'css', 'diff', 'go', 'html', 'javascript', 'json', 'latex', 'lua', 'luadoc', 'markdown',
   'tsx', 'typescript', 'vim', 'vimdoc' }
-require('nvim-treesitter.install').install(vim.tbl_filter(function(l) return parsers[l] end, wanted))
+local function sync_parsers()
+  require('nvim-treesitter.install').install(vim.tbl_filter(function(l) return parsers[l] end, wanted))
+end
+vim.api.nvim_create_user_command('SyncParsers', sync_parsers, { desc = 'Install missing Treesitter parsers' })
+vim.schedule(sync_parsers)
 
 -- vim: ts=2 sts=2 sw=2 et
