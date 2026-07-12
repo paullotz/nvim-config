@@ -1,4 +1,4 @@
--- require("vim._core.ui2").enable({})
+require("vim._core.ui2").enable({})
 vim.loader.enable()
 
 vim.cmd [[set mouse=]]
@@ -40,10 +40,29 @@ vim.opt.smartindent = true
 vim.opt.termguicolors = true
 
 vim.api.nvim_create_autocmd("FileType", {
-  pattern = "tex",
+  pattern = { "tex", "typst" },
   callback = function()
     vim.opt_local.spell = true
     vim.opt_local.spelllang = "en_us"
+  end,
+})
+
+vim.api.nvim_create_autocmd("FileType", {
+  pattern = "typst",
+  callback = function()
+    local opts = { buffer = true, silent = true }
+    vim.keymap.set("n", "<leader>dp", function()
+      local clients = vim.lsp.get_clients({ name = "tinymist" })
+      if #clients > 0 then
+        clients[1]:exec_cmd({
+          command = "tinymist.startDefaultPreview",
+          arguments = { vim.api.nvim_buf_get_name(0) },
+          title = "Preview",
+        })
+      else
+        vim.notify("Tinymist LSP is not running", vim.log.levels.WARN)
+      end
+    end, vim.tbl_extend("force", opts, { desc = "Typst: [D]ocument [P]review" }))
   end,
 })
 
@@ -52,16 +71,23 @@ local map = vim.keymap.set
 map('n', '<Esc>', '<cmd>nohlsearch<CR>')
 map('n', '<C-q>', ":copen<CR>", { desc = 'Open diagnostic [Q]uickfix list' })
 map('n', '<C-p>', ':e#<CR>', { desc = 'Go back to [p]revious file' })
-map('n', '<leader>w', '<Cmd>update<CR>', { desc = '[W]rite changes to current file' })
+map('n', '<leader>w', '<Cmd>update<CR>', { desc = 'Write changes to current file' })
 map('n', '<leader>f', vim.lsp.buf.format)
-map('n', '<leader>q', '<Cmd>quit<CR>', { desc = 'Quit current buffer' })
+map('n', '<leader>x', '<Cmd>quit<CR>', { desc = 'Close split window' })
 map('n', '<leader>Q', '<Cmd>wqa<CR>', { desc = 'Write all and quit' })
-map('n', '<leader>re', '<Cmd>restart<CR>', { desc = 'Restart neovim' })
 
-map({ "n", "t" }, "<Leader>t", "<Cmd>tabnew<CR>")
-map({ "n", "t" }, "<Leader>x", "<Cmd>tabclose<CR>")
+local function reload_config()
+  local config_dir = vim.fn.stdpath("config")
+  local init_file = config_dir .. "/init.lua"
+  dofile(init_file)
+  vim.notify("Config reloaded!", vim.log.levels.INFO)
+end
+map('n', '<leader>re', reload_config, { desc = 'Reload neovim config' })
+
+map({ "n", "t" }, "<Leader>tn", "<Cmd>tabnew<CR>", { desc = "New tab" })
+map({ "n", "t" }, "<Leader>tc", "<Cmd>tabclose<CR>", { desc = "Close tab" })
 for i = 1, 8 do
-  map({ "n", "t" }, "<Leader>" .. i, "<Cmd>tabnext " .. i .. "<CR>")
+  map({ "n", "t" }, "<Leader>" .. i, "<Cmd>tabnext " .. i .. "<CR>", { desc = "Go to tab " .. i })
 end
 
 map({ "n" }, "<M-n>", "<cmd>resize +2<CR>")
@@ -75,8 +101,11 @@ map("n", "<C-d>", "<C-d>zz")
 map("n", "<C-u>", "<C-u>zz")
 map("n", "n", "nzzzv")
 map("n", "N", "Nzzzv")
-map({ "n", "v", "x" }, "<leader>r", ":edit!<CR>", { desc = 'Reload current file' })
-map({ "n" }, "<leader>c", "1z=", { desc = "Correct spelling" })
+map({ "n", "v", "x" }, "<leader>rr", ":edit!<CR>", { desc = 'Reload current file' })
+map({ "n" }, "<leader>cs", "1z=", { desc = "Correct spelling" })
+map('n', ']q', '<cmd>cnext<CR>zz', { desc = 'Next quickfix item' })
+map('n', '[q', '<cmd>cprev<CR>zz', { desc = 'Previous quickfix item' })
+map('x', '<leader>p', '"_dP', { desc = 'Paste without yanking selection' })
 
 vim.cmd([[
   nnoremap gK @='ddkPJ'<cr>
@@ -91,16 +120,6 @@ vim.api.nvim_create_autocmd('TextYankPost', {
   callback = function()
     vim.highlight.on_yank()
   end,
-})
-
-vim.api.nvim_create_autocmd("BufWinEnter", {
-  pattern = "*.tsx",
-  group = vim.api.nvim_create_augroup("TS", { clear = true }),
-  callback = function()
-    vim.cmd([[set filetype=typescriptreact]])
-    vim.opt_local.tabstop = 2
-    vim.opt_local.shiftwidth = 2
-  end
 })
 
 vim.pack.add({
@@ -201,15 +220,21 @@ require('oil').setup {
 }
 vim.keymap.set('n', '<leader>e', '<CMD>Oil<CR>', { desc = 'Open parent directory' })
 
+vim.api.nvim_create_autocmd("FileType", {
+  pattern = "oil",
+  callback = function()
+    vim.opt_local.winbar = "%{%v:lua.CustomOilBar()%}"
+  end,
+})
+
 require('mini.pairs').setup()
 require('mini.git').setup()
 require('mini.surround').setup()
 require('mini.statusline').setup({
   use_icons = false,
 })
-require('mini.bufremove').setup {
-  map('n', '<leader>q', require('mini.bufremove').delete),
-}
+require('mini.bufremove').setup({})
+map('n', '<leader>q', require('mini.bufremove').delete, { desc = 'Delete current buffer safely' })
 
 require('which-key').setup({
   icons = {
@@ -248,9 +273,8 @@ require('which-key').setup({
   spec = {
     { '<leader>c', group = '[C]ode',     mode = { 'n', 'x' } },
     { '<leader>d', group = '[D]ocument' },
-    { '<leader>r', group = '[R]ename' },
+    { '<leader>r', group = '[R]ename/Reload' },
     { '<leader>s', group = '[S]earch' },
-    { '<leader>w', group = '[W]orkspace' },
     { '<leader>t', group = '[T]oggle' },
     { '<leader>h', group = 'Git [H]unk', mode = { 'n', 'v' } },
   },
@@ -331,12 +355,6 @@ vim.api.nvim_create_autocmd('LspAttach', {
   callback = function(args)
     local client = assert(vim.lsp.get_client_by_id(args.data.client_id))
 
-    if client:supports_method('textDocument/completion') then
-      local chars = {}; for i = 32, 126 do table.insert(chars, string.char(i)) end
-      client.server_capabilities.completionProvider.triggerCharacters = chars
-      vim.lsp.completion.enable(true, client.id, args.buf, { autotrigger = true })
-    end
-
     local bufmap = function(keys, func, desc)
       vim.keymap.set('n', keys, func, { buffer = args.buf, desc = 'LSP: ' .. desc })
     end
@@ -347,7 +365,7 @@ vim.api.nvim_create_autocmd('LspAttach', {
     bufmap('<leader>D', require('telescope.builtin').lsp_type_definitions, 'Type [D]efinition')
     bufmap('<leader>ds', require('telescope.builtin').lsp_document_symbols, '[D]ocument [S]ymbols')
     bufmap('<leader>cd', require('telescope.builtin').diagnostics, '[C]ode [D]iagnostics')
-    bufmap('<leader>ws', require('telescope.builtin').lsp_dynamic_workspace_symbols, '[W]orkspace [S]ymbols')
+    bufmap('<leader>sS', require('telescope.builtin').lsp_dynamic_workspace_symbols, '[S]earch workspace [S]ymbols')
     bufmap('<leader>rn', vim.lsp.buf.rename, '[R]e[n]ame')
     bufmap('gy', require('telescope.builtin').lsp_type_definitions, '[G]oto T[y]pe')
     bufmap(']d', function() vim.diagnostic.goto_next() end, 'Next diagnostic')
@@ -403,7 +421,14 @@ vim.cmd [[set completeopt+=menuone,noselect,popup]]
 
 vim.lsp.enable({
   "lua_ls", "clangd", "biome", "gopls", "cssls", "sqls",
-  "tailwindcss", "vtsls", "jsonls", "harper_ls",
+  "tailwindcss", "vtsls", "jsonls", "harper_ls", "tinymist",
+})
+
+vim.lsp.config('tinymist', {
+  settings = {
+    exportPdf = "onSave",
+    formatterMode = "typstyle",
+  },
 })
 
 vim.lsp.config('tailwindcss', {
@@ -429,7 +454,11 @@ ls.setup { enable_autosnippets = true }
 require('luasnip.loaders.from_lua').load { paths = vim.fn.stdpath 'config' .. '/snippets' }
 
 require('blink.cmp').setup({
-  keymap = { preset = 'default' },
+  keymap = {
+    preset = 'default',
+    ['<Tab>'] = { 'snippet_forward', 'fallback' },
+    ['<S-Tab>'] = { 'snippet_backward', 'fallback' },
+  },
   appearance = { nerd_font_variant = 'mono' },
   completion = { documentation = { auto_show = true, auto_show_delay_ms = 500 } },
   sources = {
@@ -442,10 +471,6 @@ require('blink.cmp').setup({
   fuzzy = { implementation = 'prefer_rust' },
 })
 
-map({ "i", "s" }, "<C-e>", function() ls.expand_or_jump(1) end, { silent = true })
-map({ "i", "s" }, "<C-J>", function() ls.jump(1) end, { silent = true })
-map({ "i", "s" }, "<C-K>", function() ls.jump(-1) end, { silent = true })
-
 require('nvim-ts-autotag').setup()
 
 vim.api.nvim_create_autocmd('FileType', {
@@ -455,7 +480,7 @@ vim.api.nvim_create_autocmd('FileType', {
 
 local parsers = require('nvim-treesitter.parsers')
 local wanted = { 'bash', 'c', 'cpp', 'css', 'diff', 'go', 'html', 'javascript', 'json', 'latex', 'lua', 'luadoc', 'markdown',
-  'tsx', 'typescript', 'vim', 'vimdoc' }
+  'tsx', 'typescript', 'vim', 'vimdoc', 'typst' }
 local function sync_parsers()
   require('nvim-treesitter.install').install(vim.tbl_filter(function(l) return parsers[l] end, wanted))
 end
