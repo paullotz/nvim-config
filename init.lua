@@ -123,7 +123,6 @@ vim.api.nvim_create_autocmd('TextYankPost', {
 })
 
 vim.pack.add({
-  'https://github.com/zbirenbaum/copilot.lua',
   'https://github.com/alexghergh/nvim-tmux-navigation',
   'https://github.com/vimpostor/vim-tpipeline',
   'https://github.com/lervag/vimtex',
@@ -138,7 +137,6 @@ vim.pack.add({
   'https://github.com/neovim/nvim-lspconfig',
   'https://github.com/j-hui/fidget.nvim',
   'https://github.com/saghen/blink.cmp',
-  'https://github.com/L3MON4D3/LuaSnip',
   'https://github.com/vague2k/vague.nvim',
   'https://github.com/windwp/nvim-ts-autotag',
   'https://github.com/nvim-treesitter/nvim-treesitter',
@@ -148,22 +146,6 @@ vim.pack.add({
 require('vague').setup({ transparent = true })
 vim.cmd 'colorscheme vague'
 vim.cmd ':hi statusline guibg=NONE'
-
-require("copilot").setup({
-  suggestion = {
-    enabled = false,
-    auto_trigger = true,
-    keymap = {
-      accept_word = false,
-      accept = "<C-j>",
-      accept_line = false,
-      next = "<M-]>",
-      prev = "<M-[>",
-      dismiss = "<C-]>",
-    },
-  },
-  panel = { enabled = false },
-})
 
 require 'nvim-tmux-navigation'.setup {
   disable_when_zoomed = true,
@@ -271,12 +253,12 @@ require('which-key').setup({
     },
   },
   spec = {
-    { '<leader>c', group = '[C]ode',     mode = { 'n', 'x' } },
+    { '<leader>c', group = '[C]ode',         mode = { 'n', 'x' } },
     { '<leader>d', group = '[D]ocument' },
     { '<leader>r', group = '[R]ename/Reload' },
     { '<leader>s', group = '[S]earch' },
     { '<leader>t', group = '[T]oggle' },
-    { '<leader>h', group = 'Git [H]unk', mode = { 'n', 'v' } },
+    { '<leader>h', group = 'Git [H]unk',     mode = { 'n', 'v' } },
   },
 })
 
@@ -449,25 +431,18 @@ require('lazydev').setup({
   },
 })
 
-local ls = require 'luasnip'
-ls.setup { enable_autosnippets = true }
-require('luasnip.loaders.from_lua').load { paths = vim.fn.stdpath 'config' .. '/snippets' }
-
 require('blink.cmp').setup({
   keymap = {
     preset = 'default',
-    ['<Tab>'] = { 'snippet_forward', 'fallback' },
-    ['<S-Tab>'] = { 'snippet_backward', 'fallback' },
   },
   appearance = { nerd_font_variant = 'mono' },
   completion = { documentation = { auto_show = true, auto_show_delay_ms = 500 } },
   sources = {
-    default = { 'snippets', 'lsp', 'path', 'lazydev' },
+    default = { 'lsp', 'path', 'lazydev' },
     providers = {
       lazydev = { module = 'lazydev.integrations.blink', score_offset = 100 },
     },
   },
-  snippets = { preset = 'luasnip' },
   fuzzy = { implementation = 'prefer_rust' },
 })
 
@@ -479,7 +454,8 @@ vim.api.nvim_create_autocmd('FileType', {
 })
 
 local parsers = require('nvim-treesitter.parsers')
-local wanted = { 'bash', 'c', 'cpp', 'css', 'diff', 'go', 'html', 'javascript', 'json', 'latex', 'lua', 'luadoc', 'markdown',
+local wanted = { 'bash', 'c', 'cpp', 'css', 'diff', 'go', 'html', 'javascript', 'json', 'latex', 'lua', 'luadoc',
+  'markdown',
   'tsx', 'typescript', 'vim', 'vimdoc', 'typst' }
 local function sync_parsers()
   require('nvim-treesitter.install').install(vim.tbl_filter(function(l) return parsers[l] end, wanted))
