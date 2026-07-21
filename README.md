@@ -1,38 +1,24 @@
 # Neovim Configuration
 
-A personal, high-performance Neovim configuration built with built-in `vim.pack` package management, `blink.cmp` for completions, `telescope.nvim` for search, and Treesitter for syntax highlighting.
-
----
+Personal Neovim configuration built on standard packages, blink.cmp, telescope, and Treesitter.
 
 ## Requirements
 
-*   **neovim** (>= 0.12.0)
-*   **ripgrep**
-*   **fd**
-*   **tmux** (for `nvim-tmux-navigation` and status pipeline)
+### Core Packages
+* Neovim (>= 0.10.0)
+* git
+* gcc or clang, and make (for treesitter and blink.cmp builds)
+* Nerd Font (recommended)
+* ripgrep (for telescope search)
+* fd (for directory search)
 
----
+## Installation
 
-## Installation Guides
-
-### Arch 
-Install the core, search, and language requirements:
 ```bash
-sudo pacman -S neovim git base-devel ripgrep fd
+git clone <your-repo-url> ~/.config/nvim
 ```
 
-### macOS
-First, ensure you have Xcode Command Line Tools installed (`xcode-select --install`), then use Homebrew:
-```bash
-brew install neovim git ripgrep fd
-```
-
----
-
-## Installation & Setup
-
-```bash
-git clone https://github.com/paullotz/nvim-config ~/.config/nvim
-nvim
+To sync Treesitter parsers:
+```vim
 :SyncParsers
 ```
